@@ -3,11 +3,14 @@
 This github repo is my personal playground code to setup a local AI environment for prompting for when claude goes on vacation. This isn't anything special and there are probably much better solutions out there however I'm taking this as an opportunity for learning experience. It ain't much but it's an honest living...
 
 # System Specifications
+
+```
 CPU: AMD Ryzen 9 9900X 12-Core Processor (24 cores)
 Total RAM: 62.44 GB
 Available RAM: 54.57 GB
 Backend: CUDA
 GPU: NVIDIA GeForce RTX 5060 Ti (15.93 GB VRAM, CUDA)
+```
 
 # Software
 
