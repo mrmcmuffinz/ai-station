@@ -59,6 +59,9 @@ check_internal_service "fluent-bit"
 echo -e "\n${BLUE}${BOLD}[ Tracing Layer ]${NC}"
 check_external_service "phoenix" "/"
 
+echo -e "\n${BLUE}${BOLD}[ AI Search Layer ]${NC}"
+check_external_service "searxng" "/healthz"
+
 echo -e "\n${BLUE}${BOLD}[ AI Application Layer ]${NC}"
 check_external_service "ollama" "/api/tags"
 check_external_service "open-webui" "/health"

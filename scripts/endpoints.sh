@@ -19,7 +19,7 @@ get_url() {
     local port=$(echo "$DATA" | jq -r ".[] | select(.Service==\"$service_name\") | .Publishers[0].PublishedPort")
     
     if [ ! -z "$port" ] && [ "$port" != "null" ]; then
-        printf "%-15s : ${BLUE}http://localhost:%s%s${NC}\n" "$label" "$port" "$path"
+        printf "%-15s : ${BLUE}http://127.0.0.1:%s%s${NC}\n" "$label" "$port" "$path"
     fi
 }
 

@@ -63,6 +63,27 @@ services:
         max-size: "50m"
         max-file: "3"
 
+  # --- SEARCH UTILITY ---
+  searxng:
+    container_name: searxng
+    image: searxng/searxng:latest
+    restart: unless-stopped
+    ports:
+      - "8888:8080"
+    volumes:
+      - /mnt/data2/monitoring/searxng/config:/etc/searxng:rw
+      - /mnt/data2/monitoring/searxng/data:/var/cache/searxng:rw
+    environment:
+      - SEARXNG_BASE_URL=http://localhost:8080/
+      - SEARXNG_LIMITER=false
+    depends_on:
+      - fluent-bit
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
   # --- AI SERVICES (Starts Last) ---
   ollama:
     image: ollama/ollama:latest
@@ -74,6 +95,13 @@ services:
       - "11434:11434"
     volumes:
       - /mnt/data2/ollama_storage:/root/.ollama
+    # 2. ADD ENVIRONMENT VARIABLES
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - OLLAMA_DEBUG=1
+      - OLLAMA_LLM_LIBRARY=cuda_v12
+      - OLLAMA_FLASH_ATTENTION=1
+      - OLLAMA_GPU_OVERHEAD=2147483648
     deploy:
       resources:
         reservations:
@@ -85,7 +113,6 @@ services:
       driver: json-file
       options:
         max-size: "50m"
-        max-file: "3"
 
   open-webui:
     image: ghcr.io/open-webui/open-webui:main

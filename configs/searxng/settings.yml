@@ -1,0 +1,38 @@
+use_default_settings: true
+
+server:
+  secret_key: "CHANGE_ME"
+  port: 8080
+  bind_address: "0.0.0.0"
+  method: "GET"
+  real_ip: false 
+  limiter: false
+
+search:
+  safe_search: 0
+  autocomplete: ""
+  formats:
+    - html
+    - json
+
+botdetection:
+  ip_limit:
+    filter_link_local: true
+    enabled: false
+  ip_lists:
+    pass_ip:
+      - "127.0.0.1"
+      - "172.16.0.0/12"
+      - "192.168.2.0/24"
+      - "10.4.0.0/24"
+
+engines:
+  - name: google
+    engine: google
+  - name: duckduckgo
+    engine: duckduckgo
+  - name: wikipedia
+    engine: wikipedia
+  - name: github
+    engine: github
+    shortcut: gh
