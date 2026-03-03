@@ -1,0 +1,112 @@
+services:
+  # --- LOGGING STACK (Starts First) ---
+  vlogs:
+    image: victoriametrics/victoria-logs:latest
+    container_name: vlogs
+    restart: unless-stopped
+    ports:
+      - "9428:9428"
+    volumes:
+      - /mnt/data2/monitoring/vlogs_data:/vlogs-data
+    command:
+      - "-storageDataPath=/vlogs-data"
+      - "-retentionPeriod=7d" # Optional: Keeps 7 days of logs to save space
+      - "-retention.maxDiskUsagePercent=80" # Emergency delete if disk > 80%
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+
+  fluent-bit:
+    image: fluent/fluent-bit:4.2-debug
+    container_name: fluent-bit
+    user: "0:0"
+    restart: unless-stopped
+    depends_on:
+      vlogs:
+        condition: service_healthy
+    volumes:
+      - /home/boringpc/.local/share/nerdctl/1935db59/containers/default:/logs:ro
+    command: >
+      /fluent-bit/bin/fluent-bit
+      -i tail
+      -p path=/logs/*/*.log
+      -p path_key=file_path
+      -p tag=ai-station
+      -o http
+      -p host=vlogs
+      -p port=9428
+      -p uri=/insert/jsonline?_stream_fields=tag,_file
+      -p format=json_lines
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m" # Just a safety cap for local disk
+        max-file: "1"
+
+  # --- TRACING ---
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    container_name: phoenix
+    restart: unless-stopped
+    depends_on:
+      - fluent-bit # Ensures logging is ready
+    ports:
+      - "6006:6006"
+      - "4317:4317"
+    volumes:
+      - /mnt/data2/monitoring/phoenix_data:/var/lib/phoenix
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  # --- AI SERVICES (Starts Last) ---
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    depends_on:
+      - fluent-bit
+    ports:
+      - "11434:11434"
+    volumes:
+      - /mnt/data2/ollama_storage:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: unless-stopped
+    ports:
+      - "3000:8080"
+    volumes:
+      - /mnt/data2/openwebui_storage:/app/backend/data
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - ENABLE_OTEL=True
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:4317
+      - OTEL_SERVICE_NAME=open-webui
+      - OTEL_EXPORTER_OTLP_INSECURE=True
+    depends_on:
+      - ollama
+      - phoenix
+      - fluent-bit
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"

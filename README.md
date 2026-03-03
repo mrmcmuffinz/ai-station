@@ -1,0 +1,3 @@
+# AI-Station
+
+This github repo is just my playground code to setup a local AI environment for prompting for when claude goes on vacation. It ain't much but it's an honest living...
