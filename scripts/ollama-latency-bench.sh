@@ -16,13 +16,22 @@ MODEL="${1:-qwen3.5:9b}"
 OLLAMA_URL="http://localhost:11434"
 PROMPT="Explain what a container namespace is in two sentences."
 
-# Colors for readability
-CYAN='\033[0;36m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-RED='\033[0;31m'
-BOLD='\033[1m'
-RESET='\033[0m'
+# --- Smart Color Logic ---
+if [ -t 1 ]; then
+  CYAN='\033[0;36m'
+  GREEN='\033[0;32m'
+  YELLOW='\033[1;33m'
+  RED='\033[0;31m'
+  BOLD='\033[1m'
+  RESET='\033[0m'
+else
+  CYAN=''
+  GREEN=''
+  YELLOW=''
+  RED=''
+  BOLD=''
+  RESET=''
+fi
 
 header() { printf "\n${BOLD}${CYAN}━━━ %s ━━━${RESET}\n\n" "$1"; }
 info()   { printf "${GREEN}▸${RESET} %s\n" "$1"; }
@@ -42,8 +51,6 @@ ns_to_sec() {
 # New Helper Function for Test Descriptions
 # Usage: block "What" "Why" "Expect" "Description of what's happening..."
 block() {
-  local title="$1"
-  local description="$2"
   printf "${BOLD}%-8s${RESET} %s\n" "What:" "$1"
   printf "${BOLD}%-8s${RESET} %s\n" "Why:" "$2"
   printf "${BOLD}%-8s${RESET} %s\n\n" "Expect:" "$3"
@@ -78,7 +85,6 @@ block \
   "Check if any model is already resident in VRAM." \
   "If nothing is loaded, the first prompt will pay a cold-start penalty while weights are read from disk into GPU memory." \
   "If you haven't prompted recently, this will likely be empty."
-
 
 LOADED=$(curl -sf "${OLLAMA_URL}/api/ps")
 LOADED_COUNT=$(echo "${LOADED}" | jq '.models | length')
