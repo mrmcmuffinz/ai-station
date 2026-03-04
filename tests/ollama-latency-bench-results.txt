@@ -1,0 +1,112 @@
+
+[1m[0;36m━━━ PREFLIGHT CHECKS ━━━[0m
+
+[0;32m▸[0m Checking Ollama is reachable at http://localhost:11434...
+[0;32m▸[0m Ollama is up.
+[0;32m▸[0m Checking model 'qwen3.5:9b' is available...
+[0;32m▸[0m Model 'qwen3.5:9b' is available.
+
+[1m[0;36m━━━ TEST 1 — CURRENTLY LOADED MODELS ━━━[0m
+
+\033[1mWhat:\033[0m  Check if any model is already resident in VRAM.
+\033[1mWhy:\033[0m   If nothing is loaded, the first prompt will pay a cold-start
+       penalty while weights are read from disk into GPU memory.
+\033[1mExpect:\033[0m If you haven't prompted recently, this will likely be empty.
+
+[1;33m▸[0m No models currently loaded. First request WILL be a cold start.
+
+[1m[0;36m━━━ TEST 2 — COLD START (Model Load from Disk → VRAM) ━━━[0m
+
+\033[1mWhat:\033[0m  Force-unload the model, then send a prompt. This measures the
+       worst-case latency: reading weights from disk into VRAM + inference.
+\033[1mWhy:\033[0m   Ollama unloads models after 5 min idle by default. If you see
+       long pauses on first prompts after a break, this is the cause.
+\033[1mExpect:\033[0m load_duration will be large (2–15 seconds depending on model
+       size). A 9B Q4 model typically loads in 2–5s from SSD.
+
+[0;32m▸[0m Unloading qwen3.5:9b from VRAM...
+[0;32m▸[0m Sending cold prompt: "Explain what a container namespace is in two sentences."
+[0;32m▸[0m This may take a while — model must load first...
+
+[1mCold Start Results:[0m
+  [1mWall clock:             [0m 12531 ms
+  [1mModel load (disk→VRAM):[0m 1733.5 ms  (1.73 s)
+  [1mPrompt eval (prefill):  [0m 33.0 ms  (21 tokens)
+  [1mGeneration (decode):    [0m 10070.6 ms  (637 tokens)
+  [1mTokens/sec (decode):    [0m 63.3 t/s
+  [1mOverhead (wall - sum):  [0m 694 ms
+
+[1m[0;36m━━━ TEST 3 — WARM INFERENCE (Model Already in VRAM) ━━━[0m
+
+\033[1mWhat:\033[0m  Send the same prompt again immediately. The model is still
+       loaded in VRAM from Test 2, so there's no load penalty.
+\033[1mWhy:\033[0m   This isolates pure inference speed — the baseline your users
+       experience when the model is warm.
+\033[1mExpect:\033[0m load_duration should be near zero. Total time should be
+       dramatically faster than the cold start.
+
+[0;32m▸[0m Sending warm prompt (model should be resident)...
+
+[1mWarm Inference Results:[0m
+  [1mWall clock:             [0m 16276 ms
+  [1mModel load:             [0m 105.6 ms  (should be ~0)
+  [1mPrompt eval (prefill):  [0m 33.4 ms  (21 tokens)
+  [1mGeneration (decode):    [0m 15129.3 ms  (962 tokens)
+  [1mTokens/sec (decode):    [0m 63.6 t/s
+
+[1m[0;36m━━━ TEST 4 — FLASH ATTENTION CHECK ━━━[0m
+
+\033[1mWhat:\033[0m  Verify that OLLAMA_FLASH_ATTENTION=1 is actually set in the
+       running container's environment.
+\033[1mWhy:\033[0m   Flash attention reduces memory usage for KV cache and can
+       improve throughput. It's set in compose.yml but worth confirming
+       it's reaching the process.
+\033[1mExpect:\033[0m OLLAMA_FLASH_ATTENTION=1 should appear in the output.
+
+[0;32m▸[0m Flash attention: OLLAMA_FLASH_ATTENTION=1
+
+[1m[0;36m━━━ TEST 5 — GPU OFFLOAD VERIFICATION ━━━[0m
+
+\033[1mWhat:\033[0m  Check how many layers are offloaded to the GPU vs CPU.
+\033[1mWhy:\033[0m   If the model doesn't fit entirely in VRAM, some layers run on
+       CPU which is dramatically slower. With 14 GB usable VRAM, all four
+       currently-pulled models should fit fully on GPU.
+\033[1mExpect:\033[0m For qwen3.5:9b, you should see size_vram ≈ size (meaning the
+       full model is on GPU, no CPU spillover).
+
+  [1mTotal model size:       [0m 8.1 GB
+  [1mVRAM allocated:         [0m 8.1 GB
+  [1mGPU offload:            [0m 100.0%
+[0;32m▸[0m Full GPU offload — no CPU spillover.
+
+[1m[0;36m━━━ TEST 6 — OPEN WEBUI OVERHEAD (Optional) ━━━[0m
+
+\033[1mWhat:\033[0m  Compare latency when routing through Open WebUI vs direct
+       Ollama API. This measures the middleware overhead.
+\033[1mWhy:\033[0m   Open WebUI adds Python processing, OTEL tracing export to
+       Phoenix, and its own request handling. If direct Ollama is fast but
+       Open WebUI feels slow, this layer is the bottleneck.
+\033[1mExpect:\033[0m Small overhead (100–500ms) is normal. Multiple seconds of
+       added latency suggests a problem in the middleware or tracing.
+
+[1;33m▸[0m This test requires an Open WebUI API key.
+[0;32m▸[0m To get one: Open WebUI → Settings → Account → API Keys
+
+[0;32m▸[0m OPENWEBUI_API_KEY is set — running test...
+[1mOpen WebUI Results:[0m
+  [1mWall clock:             [0m 21169 ms
+  [1mWarm Ollama baseline:   [0m 16276 ms
+  [1mOverhead:               [0m 4893 ms
+
+[1m[0;36m━━━ SUMMARY ━━━[0m
+
+[1mMetric                               Cold       Warm[0m
+────────────────────────────── ────────── ──────────
+Wall clock                         12531 ms     16276 ms
+Model load                        1733.5 ms     105.6 ms
+Prompt eval                         33.0 ms      33.4 ms
+Generation                       10070.6 ms   15129.3 ms
+Decode throughput                  63.3 t/s     63.6 t/s
+
+
+[0;32m▸[0m Done. Run with a different model: ./ollama-latency-bench.sh gemma3:12b

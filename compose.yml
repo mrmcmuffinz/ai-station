@@ -124,6 +124,7 @@ services:
       - /mnt/data2/openwebui_storage:/app/backend/data
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
+      - ENABLE_API_KEYS=True 
       - ENABLE_OTEL=True
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://phoenix:4317
       - OTEL_SERVICE_NAME=open-webui
