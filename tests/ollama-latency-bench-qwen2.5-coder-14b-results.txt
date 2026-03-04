@@ -1,0 +1,96 @@
+
+━━━ PREFLIGHT CHECKS ━━━
+
+▸ Checking Ollama is reachable at http://localhost:11434...
+▸ Ollama is up.
+▸ Checking model 'qwen2.5-coder:14b' is available...
+▸ Model 'qwen2.5-coder:14b' is available.
+
+━━━ TEST 1 — CURRENTLY LOADED MODELS ━━━
+
+What:    Check if any model is already resident in VRAM.
+Why:     If nothing is loaded, the first prompt will pay a cold-start penalty while weights are read from disk into GPU memory.
+Expect:  If you haven't prompted recently, this will likely be empty.
+
+▸ Models currently in VRAM:
+  deepseek-r1:14b  size_vram=9714411520  expires=2026-03-04T05:41:15.60565431Z
+
+━━━ TEST 2 — COLD START (Model Load from Disk → VRAM) ━━━
+
+What:    Force-unload the model, then send a prompt. This measures the worst-case latency: reading weights from disk into VRAM + inference.
+Why:     Ollama unloads models after 5 min idle by default. If you see long pauses on first prompts after a break, this is the cause.
+Expect:  load_duration will be large (2–15 seconds depending on model size). A 9B Q4 model typically loads in 2–5s from SSD.
+
+▸ Unloading qwen2.5-coder:14b from VRAM...
+▸ Sending cold prompt: "Explain what a container namespace is in two sentences."
+▸ This may take a while — model must load first...
+
+Cold Start Results:
+  Wall clock:              4402 ms
+  Model load (disk→VRAM): 2974.2 ms  (2.97 s)
+  Prompt eval (prefill):   40.9 ms  (40 tokens)
+  Generation (decode):     1372.8 ms  (62 tokens)
+  Tokens/sec (decode):     45.2 t/s
+  Overhead (wall - sum):   15 ms
+
+━━━ TEST 3 — WARM INFERENCE (Model Already in VRAM) ━━━
+
+What:    Send the same prompt again immediately. The model is still loaded in VRAM from Test 2, so there's no load penalty.
+Why:     This isolates pure inference speed — the baseline your users experience when the model is warm.
+Expect:  load_duration should be near zero. Total time should be dramatically faster than the cold start.
+
+▸ Sending warm prompt (model should be resident)...
+
+Warm Inference Results:
+  Wall clock:              1615 ms
+  Model load:              58.3 ms  (should be ~0)
+  Prompt eval (prefill):   22.6 ms  (40 tokens)
+  Generation (decode):     1520.5 ms  (68 tokens)
+  Tokens/sec (decode):     44.7 t/s
+
+━━━ TEST 4 — FLASH ATTENTION CHECK ━━━
+
+What:    Verify that OLLAMA_FLASH_ATTENTION=1 is actually set in the running container's environment.
+Why:     Flash attention reduces memory usage for KV cache and can improve throughput. It's set in compose.yml but worth confirming it's reaching the process.
+Expect:  OLLAMA_FLASH_ATTENTION=1 should appear in the output.
+
+▸ Flash attention: OLLAMA_FLASH_ATTENTION=1
+
+━━━ TEST 5 — GPU OFFLOAD VERIFICATION ━━━
+
+What:    Check how many layers are offloaded to the GPU vs CPU.
+Why:     If the model doesn't fit entirely in VRAM, some layers run on CPU which is dramatically slower. With 14 GB usable VRAM, all four currently-pulled models should fit fully on GPU.
+Expect:  For qwen2.5-coder:14b, you should see size_vram ≈ size (meaning the full model is on GPU, no CPU spillover).
+
+  Total model size:        9.0 GB
+  VRAM allocated:          9.0 GB
+  GPU offload:             100.0%
+▸ Full GPU offload — no CPU spillover.
+
+━━━ TEST 6 — OPEN WEBUI OVERHEAD (Optional) ━━━
+
+What:    Compare latency when routing through Open WebUI vs direct Ollama API. This measures the middleware overhead.
+Why:     Open WebUI adds Python processing, OTEL tracing export to Phoenix, and its own request handling. If direct Ollama is fast but Open WebUI feels slow, this layer is the bottleneck.
+Expect:  Small overhead (100–500ms) is normal. Multiple seconds of added latency suggests a problem in the middleware or tracing.
+
+▸ This test requires an Open WebUI API key.
+▸ To get one: Open WebUI → Settings → Account → API Keys
+
+▸ OPENWEBUI_API_KEY is set — running test...
+Open WebUI Results:
+  Wall clock:              1770 ms
+  Warm Ollama baseline:    1615 ms
+  Overhead:                155 ms
+
+━━━ SUMMARY ━━━
+
+Metric                               Cold       Warm
+────────────────────────────── ────────── ──────────
+Wall clock                          4402 ms      1615 ms
+Model load                        2974.2 ms      58.3 ms
+Prompt eval                         40.9 ms      22.6 ms
+Generation                        1372.8 ms    1520.5 ms
+Decode throughput                  45.2 t/s     44.7 t/s
+
+
+▸ Done. Run with a different model: ./ollama-latency-bench.sh qwen2.5-coder:14b
