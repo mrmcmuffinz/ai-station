@@ -1,4 +1,7 @@
+import os
+
 def print_board(board):
+    os.system('cls' if os.name == 'nt' else 'clear')
     for row in board:
         print(" | ".join(row))
         print("-" * 5)
