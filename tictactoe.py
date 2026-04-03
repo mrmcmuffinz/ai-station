@@ -21,11 +21,11 @@ def is_board_full(board):
 def main():
     board = [[' ' for _ in range(3)] for _ in range(3)]
     current_player = 'X'
-    
+
     while True:
         print_board(board)
         print(f"Player {current_player}'s turn")
-        
+
         while True:
             try:
                 move = int(input("Enter a number 1-9: ")) - 1
@@ -37,7 +37,7 @@ def main():
                     print("That square is already occupied. Try again.")
             except (ValueError, IndexError):
                 print("Invalid input. Please enter a number 1-9.")
-        
+
         if check_winner(board, current_player):
             print_board(board)
             print(f"Player {current_player} wins!")
@@ -46,9 +46,9 @@ def main():
             print_board(board)
             print("It's a draw!")
             break
-        
+
         current_player = 'O' if current_player == 'X' else 'X'
-    
+
     play_again = input("Do you want to play again? (yes/no): ").strip().lower()
     if play_again == 'yes':
         main()
