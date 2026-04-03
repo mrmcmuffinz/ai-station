@@ -36,6 +36,9 @@ def main():
         while True:
             try:
                 move = int(input("Enter a number 1-9: ")) - 1
+                if move < 0 or move > 8:
+                    print("Invalid input. Please enter a number 1-9.")
+                    continue
                 row, col = move // 3, move % 3
                 if board[row][col] == ' ':
                     board[row][col] = current_player
