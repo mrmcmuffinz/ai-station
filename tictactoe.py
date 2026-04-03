@@ -2,9 +2,13 @@ import os
 
 def print_board(board):
     os.system('cls' if os.name == 'nt' else 'clear')
-    for row in board:
-        print(" | ".join(row))
-        print("-" * 5)
+    board_length = len(board)
+    print("Let's play Tic Tac Toe\n")
+    for row in range(board_length):
+        print(" | ".join(board[row]))
+        if row < board_length - 1:
+            print("-" * 9)
+    print("")
 
 def check_winner(board, player):
     # Check rows, columns, and diagonals for a win
