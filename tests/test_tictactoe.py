@@ -30,7 +30,7 @@ class TestTicTacToe(unittest.TestCase):
         board = [
             ['X', 'O', 'X'],
             ['O', 'X', 'O'],
-            ['X', 'O', ' ']
+            ['O', ' ', 'X']
         ]
         self.assertFalse(check_winner(board, 'X'))
 
