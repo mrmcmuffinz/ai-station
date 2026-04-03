@@ -47,5 +47,7 @@ aider --model ollama/qwen2.5-coder:14b
 
 ```
 /ask
-/read prompts/tictactoev2.md
+/read-only aider/prompts/tictactoev2.md
 ```
+
+At this point you need to actually work with the ai model to evaluate the prompt and complete the task.
