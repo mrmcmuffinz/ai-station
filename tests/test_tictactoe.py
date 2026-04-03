@@ -26,6 +26,14 @@ class TestTicTacToe(unittest.TestCase):
         ]
         self.assertTrue(check_winner(board, 'X'))
 
+    def test_check_winner_reverse_diagonal(self):
+        board = [
+            [' ', ' ', 'X'],
+            [' ', 'X', ' '],
+            ['X', ' ', ' ']
+        ]
+        self.assertTrue(check_winner(board, 'X'))
+
     def test_check_winner_no_winner(self):
         board = [
             ['X', 'O', 'X'],
