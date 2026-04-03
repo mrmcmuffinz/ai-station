@@ -36,35 +36,8 @@ check_external_service() {
     fi
 }
 
-check_internal_service() {
-    local service_name=$1
-    
-    # Check if the container is running and has a healthy process
-    if nerdctl ps --filter "name=$service_name" --filter "status=running" | grep -q "$service_name"; then
-        # For Fluent Bit, we check if it's actually processing by looking for the binary in the process list
-        if nerdctl exec "$service_name" pgrep fluent-bit > /dev/null 2>&1; then
-             echo -e "  ${GREEN}✔ $service_name${NC} (Internal) - Process Active"
-        else
-             echo -e "  ${RED}✘ $service_name${NC} (Internal) - Process Not Found"
-        fi
-    else
-        echo -e "  ${RED}✘ $service_name${NC} - Container not running"
-    fi
-}
-
-echo -e "${BLUE}${BOLD}[ Infrastructure Layer ]${NC}"
-check_external_service "vlogs" "/health"
-check_internal_service "fluent-bit"
-
-echo -e "\n${BLUE}${BOLD}[ Tracing Layer ]${NC}"
-check_external_service "phoenix" "/"
-
-echo -e "\n${BLUE}${BOLD}[ AI Search Layer ]${NC}"
-check_external_service "searxng" "/healthz"
-
 echo -e "\n${BLUE}${BOLD}[ AI Application Layer ]${NC}"
 check_external_service "ollama" "/api/tags"
-check_external_service "open-webui" "/health"
 
 echo -e "\n${BOLD}--- GPU Status ---${NC}"
 if command -v nvidia-smi &> /dev/null; then
@@ -76,4 +49,3 @@ else
 fi
 
 echo -e "\n${BOLD}--- Check Complete ---${NC}"
-

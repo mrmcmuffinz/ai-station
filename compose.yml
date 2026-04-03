@@ -98,10 +98,12 @@ services:
     # 2. ADD ENVIRONMENT VARIABLES
     environment:
       - CUDA_VISIBLE_DEVICES=0
+      - OLLAMA_HOST=0.0.0.0 
       - OLLAMA_DEBUG=1
       - OLLAMA_LLM_LIBRARY=cuda_v12
       - OLLAMA_FLASH_ATTENTION=1
-      - OLLAMA_GPU_OVERHEAD=2147483648
+      - OLLAMA_CONTEXT_LENGTH=65536
+      #- OLLAMA_GPU_OVERHEAD=2147483648
     deploy:
       resources:
         reservations:
