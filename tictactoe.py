@@ -46,7 +46,7 @@ def main():
                 else:
                     print("That square is already occupied. Try again.")
             except (ValueError, IndexError):
-                print("Invalid input. Please enter a number 1-9.")
+                print("Invalid input used. Please enter a number 1-9.")
 
         if check_winner(board, current_player):
             print_board(board)
