@@ -10,7 +10,6 @@
 #   node-name defaults to "node1" if not provided.
 
 set -euo pipefail
-set -x
 
 # -------------------------------------------------------------------
 # Configuration
@@ -215,7 +214,7 @@ cat > "$NODE_DIR/start-${NODE_NAME}.sh" <<STARTSCRIPT
 
 set -euo pipefail
 
-SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="scripts"
 
 qemu-system-x86_64 \\
     -name ${NODE_NAME} \\
@@ -227,8 +226,9 @@ qemu-system-x86_64 \\
     -drive file="\$SCRIPT_DIR/seed.iso",format=raw,if=virtio \\
     -netdev user,id=net0,hostfwd=tcp::${SSH_HOST_PORT}-:22,hostfwd=tcp::6443-:6443,hostfwd=tcp::2379-:2379,hostfwd=tcp::2380-:2380,hostfwd=tcp::10250-:10250,hostfwd=tcp::10257-:10257,hostfwd=tcp::10259-:10259 \\
     -device virtio-net-pci,netdev=net0 \\
-    -nographic \\
-    -serial mon:stdio \\
+    -display none \\
+    -serial file:"\$SCRIPT_DIR/${NODE_NAME}-console.log" \\
+    -daemonize \\
     -pidfile "\$SCRIPT_DIR/${NODE_NAME}.pid" \\
     "\$@"
 STARTSCRIPT
@@ -247,7 +247,7 @@ cat > "$NODE_DIR/stop-${NODE_NAME}.sh" <<STOPSCRIPT
 
 set -euo pipefail
 
-SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="scripts"
 PID_FILE="\$SCRIPT_DIR/${NODE_NAME}.pid"
 
 if [[ -f "\$PID_FILE" ]]; then

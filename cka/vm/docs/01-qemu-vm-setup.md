@@ -388,7 +388,7 @@ qemu-system-x86_64 \\
     -drive file="\$SCRIPT_DIR/seed.iso",format=raw,if=virtio \\
     -netdev user,id=net0,hostfwd=tcp::${SSH_HOST_PORT}-:22,hostfwd=tcp::6443-:6443,hostfwd=tcp::2379-:2379,hostfwd=tcp::2380-:2380,hostfwd=tcp::10250-:10250,hostfwd=tcp::10257-:10257,hostfwd=tcp::10259-:10259 \\
     -device virtio-net-pci,netdev=net0 \\
-    -nographic \\
+    -display none \\
     -serial file:"\$SCRIPT_DIR/${NODE_NAME}-console.log" \\
     -daemonize \\
     -pidfile "\$SCRIPT_DIR/${NODE_NAME}.pid" \\
