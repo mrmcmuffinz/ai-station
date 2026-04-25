@@ -304,6 +304,8 @@ ExecStart=/usr/local/bin/kube-controller-manager \\
   --root-ca-file=/var/lib/kubernetes/ca.pem \\
   --service-account-private-key-file=/var/lib/kubernetes/service-account-key.pem \\
   --service-cluster-ip-range=10.96.0.0/16 \\
+  --tls-cert-file=/var/lib/kubernetes/kubernetes.pem \\
+  --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem \\
   --use-service-account-credentials=true \\
   --v=2
 Restart=on-failure
@@ -367,6 +369,8 @@ Documentation=https://github.com/kubernetes/kubernetes
 [Service]
 ExecStart=/usr/local/bin/kube-scheduler \\
   --config=/etc/kubernetes/config/kube-scheduler.yaml \\
+  --tls-cert-file=/var/lib/kubernetes/kubernetes.pem \\
+  --tls-private-key-file=/var/lib/kubernetes/kubernetes-key.pem \\
   --v=2
 Restart=on-failure
 RestartSec=5

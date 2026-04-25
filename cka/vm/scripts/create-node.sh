@@ -15,7 +15,7 @@ set -euo pipefail
 # Configuration
 # -------------------------------------------------------------------
 NODE_NAME="${1:-node1}"
-BASE_DIR="cka-lab"
+BASE_DIR="$HOME/cka-lab"
 IMAGE_DIR="$BASE_DIR/images"
 NODE_DIR="$BASE_DIR/$NODE_NAME"
 
@@ -151,7 +151,7 @@ packages:
   - net-tools
   - jq
   - bash-completion
-  - vim
+  - golang-cfssl
 
 # Kernel modules and sysctl settings required by Kubernetes
 write_files:
@@ -208,13 +208,14 @@ echo "=== Generating VM start script ==="
 cat > "$NODE_DIR/start-${NODE_NAME}.sh" <<STARTSCRIPT
 #!/usr/bin/env bash
 #
-# Start the ${NODE_NAME} VM.
-# Run this script to boot the VM in the background.
+# Start the ${NODE_NAME} VM (daemonized).
+# The VM forks to the background automatically.
+# Console log: tail -f \$SCRIPT_DIR/${NODE_NAME}-console.log
 # SSH: ssh ${VM_USER}@${HOST_IP} -p ${SSH_HOST_PORT}
 
 set -euo pipefail
 
-SCRIPT_DIR="scripts"
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 
 qemu-system-x86_64 \\
     -name ${NODE_NAME} \\
@@ -231,6 +232,9 @@ qemu-system-x86_64 \\
     -daemonize \\
     -pidfile "\$SCRIPT_DIR/${NODE_NAME}.pid" \\
     "\$@"
+
+echo "${NODE_NAME} started (PID \$(cat "\$SCRIPT_DIR/${NODE_NAME}.pid"))."
+echo "Console log: \$SCRIPT_DIR/${NODE_NAME}-console.log"
 STARTSCRIPT
 
 chmod +x "$NODE_DIR/start-${NODE_NAME}.sh"
@@ -247,7 +251,7 @@ cat > "$NODE_DIR/stop-${NODE_NAME}.sh" <<STOPSCRIPT
 
 set -euo pipefail
 
-SCRIPT_DIR="scripts"
+SCRIPT_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 PID_FILE="\$SCRIPT_DIR/${NODE_NAME}.pid"
 
 if [[ -f "\$PID_FILE" ]]; then
@@ -289,8 +293,8 @@ echo ""
 echo "To start the VM:"
 echo "  $NODE_DIR/start-${NODE_NAME}.sh"
 echo ""
-echo "To start in background (detached):"
-echo "  nohup $NODE_DIR/start-${NODE_NAME}.sh &> $NODE_DIR/${NODE_NAME}.log &"
+echo "To watch the boot process:"
+echo "  tail -f $NODE_DIR/${NODE_NAME}-console.log"
 echo ""
 echo "To SSH into the VM (after boot completes, ~60-90 seconds):"
 echo "  ssh ${VM_USER}@${HOST_IP} -p ${SSH_HOST_PORT}"
