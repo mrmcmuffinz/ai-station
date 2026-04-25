@@ -60,12 +60,12 @@ Create the containerd configuration directory and write the config file:
 sudo mkdir -p /etc/containerd/
 
 cat <<EOF | sudo tee /etc/containerd/config.toml
-version = 2
-[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
-  runtime_type = "io.containerd.runc.v2"
-  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+version = 3
+[plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc]
+  runtime_type = 'io.containerd.runc.v2'
+  [plugins.'io.containerd.cri.v1.runtime'.containerd.runtimes.runc.options]
     SystemdCgroup = true
-    BinaryName = "/usr/local/bin/runc"
+    BinaryName = '/usr/local/bin/runc'
 EOF
 ```
 
