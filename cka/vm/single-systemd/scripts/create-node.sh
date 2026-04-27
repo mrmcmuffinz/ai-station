@@ -86,23 +86,26 @@ fi
 # -------------------------------------------------------------------
 # Create VM disk (backed by cloud image)
 # -------------------------------------------------------------------
+create_qcow2() {
+  qemu-img create -f qcow2 \
+      -b "$(realpath "$IMAGE_FILE")" \
+      -F qcow2 \
+      "$NODE_DIR/${NODE_NAME}.qcow2" \
+      "$DISK_SIZE"
+  echo "VM disk created: $NODE_DIR/${NODE_NAME}.qcow2 ($DISK_SIZE, backed by cloud image)"
+}
+
 echo "=== Creating VM disk ==="
 if [[ -f "$NODE_DIR/${NODE_NAME}.qcow2" ]]; then
     echo "WARNING: Disk $NODE_DIR/${NODE_NAME}.qcow2 already exists."
     read -rp "Overwrite? (y/N): " confirm
-    if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
-        echo "Aborting."
-        exit 1
+    if [[ "$confirm" == "y" && "$confirm" == "Y" ]]; then
+      create_qcow2
     fi
+else
+  create_qcow2
 fi
 
-qemu-img create -f qcow2 \
-    -b "$(realpath "$IMAGE_FILE")" \
-    -F qcow2 \
-    "$NODE_DIR/${NODE_NAME}.qcow2" \
-    "$DISK_SIZE"
-
-echo "VM disk created: $NODE_DIR/${NODE_NAME}.qcow2 ($DISK_SIZE, backed by cloud image)"
 
 # -------------------------------------------------------------------
 # Generate cloud-init configuration

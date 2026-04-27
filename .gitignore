@@ -1,3 +1,7 @@
 .aider*
-cka/vm/cka-lab
-cka/vm/tmp/
+*.log
+*.img
+*.iso
+*.qcow2
+*meta-data
+*user-data
